@@ -114,6 +114,7 @@ const Dashboard = {
     deleteAppointment: (appointmentId) => {
         if (confirm('Tem certeza que deseja deletar este agendamento?')) {
             Data.deleteAppointment(appointmentId);
+            Notifications.warning('Agendamento deletado com sucesso.');
             Dashboard.render();
         }
     }

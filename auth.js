@@ -63,8 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 showScreen('app-screen');
                 updateUserProfile();
                 loadDashboard();
+                Notifications.success('Bem-vindo! Login realizado com sucesso.');
             } else {
-                alert('E-mail ou senha inválidos!');
+                Notifications.error('E-mail ou senha inválidos!');
             }
         });
     }
@@ -77,16 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('signup-password').value;
 
             if (password.length < 6) {
-                alert('Senha deve ter pelo menos 6 caracteres');
+                Notifications.warning('Senha deve ter pelo menos 6 caracteres');
                 return;
             }
 
             if (Auth.signup(name, email, password)) {
-                alert('Conta criada com sucesso! Faça login para continuar.');
+                Notifications.success('Conta criada com sucesso! Faça login para continuar.');
                 showScreen('login-screen');
                 signupForm.reset();
             } else {
-                alert('Este e-mail já está registrado!');
+                Notifications.error('Este e-mail já está registrado!');
             }
         });
     }
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showScreen('login-screen');
             document.getElementById('login-form').reset();
             document.getElementById('signup-form').reset();
+            Notifications.info('Você foi desconectado.');
         });
     }
 });

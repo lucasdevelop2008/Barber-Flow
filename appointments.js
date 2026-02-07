@@ -18,14 +18,25 @@ const Appointments = {
         modal.classList.remove('active');
     },
 
+    deleteAppointmentWithNotif: (appointmentId) => {
+        if (confirm('Tem certeza que deseja deletar este agendamento?')) {
+            Data.deleteAppointment(appointmentId);
+            Notifications.warning('Agendamento deletado com sucesso.');
+            Appointments.render();
+        }
+    },
+
     render: () => {
         const user = Auth.getCurrentUser();
         if (!user) return;
 
-        const appointments = Data.getAppointmentsByUser(user.id)
+        let appointments = Data.getAppointmentsByUser(user.id)
             .sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
+        
+        appointments = Filters.applyFilters(appointments);
 
         const html = `
+            ${Filters.renderFilterPanel()}
             <div class="table-container">
                 <div class="table-header">
                     <h3>Agendamentos</h3>
@@ -59,7 +70,7 @@ const Appointments = {
                                     <td>${apt.notes || '-'}</td>
                                     <td>
                                         <button class="btn-action" onclick="Dashboard.openEditModal(${apt.id})" title="Editar"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-action delete" onclick="Dashboard.deleteAppointment(${apt.id})" title="Deletar"><i class="fas fa-trash"></i></button>
+                                        <button class="btn-action delete" onclick="Appointments.deleteAppointmentWithNotif(${apt.id})" title="Deletar"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -112,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             Appointments.closeModal();
+            Notifications.success(`Agendamento criado para ${clientName} em ${new Date(date).toLocaleDateString('pt-BR')} às ${time}`);
             
             // Reload current view
             const activeNav = document.querySelector('.nav-item.active');
@@ -138,6 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const modal = document.getElementById('modal-edit-appointment');
             modal.classList.remove('active');
+            
+            const statusLabel = Dashboard.getStatusLabel(status);
+            Notifications.success(`Agendamento atualizado para ${statusLabel}`);
             
             // Reload current view
             const activeNav = document.querySelector('.nav-item.active');

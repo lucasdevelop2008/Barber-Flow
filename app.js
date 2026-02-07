@@ -35,7 +35,9 @@ function loadView(view) {
     const titleMap = {
         'dashboard': 'Dashboard',
         'appointments': 'Agendamentos',
-        'clients': 'Clientes'
+        'clients': 'Clientes',
+        'reports': 'Relatórios',
+        'settings': 'Configurações'
     };
 
     document.getElementById('view-title').textContent = titleMap[view] || 'Dashboard';
@@ -50,9 +52,20 @@ function loadView(view) {
         case 'clients':
             Clients.render();
             break;
+        case 'reports':
+            loadReports();
+            break;
+        case 'settings':
+            loadSettings();
+            break;
         default:
             loadDashboard();
     }
+}
+
+// Load settings view
+function loadSettings() {
+    document.getElementById('view-container').innerHTML = Settings.renderSettingsPanel();
 }
 
 // Export functions for global use
@@ -60,3 +73,4 @@ window.showScreen = showScreen;
 window.updateUserProfile = updateUserProfile;
 window.loadDashboard = loadDashboard;
 window.loadView = loadView;
+window.loadSettings = loadSettings;
