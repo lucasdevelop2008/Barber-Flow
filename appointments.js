@@ -58,8 +58,8 @@ const Appointments = {
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${appointments.map(apt => `
+                                    <tbody>
+                                        ${appointments.filter(apt => !apt.isPublicBooking).map(apt => `
                                 <tr>
                                     <td>${apt.clientName}</td>
                                     <td>${apt.service}</td>

@@ -46,7 +46,7 @@ const Auth = {
 };
 
 // Setup auth event listeners
-document.addEventListener('DOMContentLoaded', () => {
+function setupAuthForms() {
     const loginForm = document.getElementById('login-form');
     const signupForm = document.getElementById('signup-form');
     const toggleSignup = document.getElementById('toggle-signup');
@@ -109,20 +109,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             Auth.logout();
-            showScreen('login-screen');
+            showScreen('landing-screen');
             document.getElementById('login-form').reset();
             document.getElementById('signup-form').reset();
             Notifications.info('Você foi desconectado.');
         });
     }
-});
+}
 
 // Helper functions
 function showScreen(screenId) {
+    // Hide all screens first
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
+        screen.style.display = 'none';
     });
-    document.getElementById(screenId).classList.add('active');
+    
+    // Show selected screen
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.classList.add('active');
+        screen.style.display = screen.id === 'landing-screen' ? 'block' : 'flex';
+    }
 }
 
 function updateUserProfile() {

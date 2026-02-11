@@ -6,11 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUserProfile();
         loadDashboard();
     } else {
-        showScreen('login-screen');
+        showScreen('landing-screen');
     }
 
     // Setup navigation
     setupNavigation();
+    setupAuthForms();
 });
 
 function setupNavigation() {

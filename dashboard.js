@@ -8,6 +8,10 @@ const Dashboard = {
         const appointments = Data.getAppointmentsByUser(user.id)
             .sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
 
+        const publicAppointments = Storage.getAppointments()
+            .filter(apt => apt.isPublicBooking)
+            .sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
+
         const html = `
             <div class="stats-grid">
                 <div class="stat-card">
@@ -40,47 +44,88 @@ const Dashboard = {
                 </div>
             </div>
 
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>Agendamentos Recentes</h3>
-                    <button class="btn-add" id="open-appointment-modal">
-                        <i class="fas fa-plus"></i> Novo Agendamento
-                    </button>
-                </div>
-                ${appointments.length > 0 ? `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Serviço</th>
-                                <th>Data/Hora</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${appointments.map(apt => `
-                                <tr>
-                                    <td>${apt.clientName}</td>
-                                    <td>${apt.service}</td>
-                                    <td>${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time}</td>
-                                    <td>R$ ${apt.price.toFixed(2)}</td>
-                                    <td><span class="status-badge status-${apt.status}">${Dashboard.getStatusLabel(apt.status)}</span></td>
-                                    <td>
-                                        <button class="btn-action" onclick="Dashboard.openEditModal(${apt.id})"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-action delete" onclick="Dashboard.deleteAppointment(${apt.id})"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                ` : `
-                    <div class="empty-state">
-                        <i class="fas fa-calendar"></i>
-                        <p>Nenhum agendamento encontrado</p>
+            <div class="dashboard-sections">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-globe"></i> Agendamentos Públicos (Novos)</h3>
                     </div>
-                `}
+                    ${publicAppointments.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Data/Hora</th>
+                                    <th>Contato</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${publicAppointments.map(apt => `
+                                    <tr>
+                                        <td>${apt.clientName}</td>
+                                        <td>${apt.service}</td>
+                                        <td>${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time}</td>
+                                        <td>${apt.clientPhone}</td>
+                                        <td>
+                                            <button class="btn-action confirm" onclick="Dashboard.confirmPublicBooking(${apt.id})" title="Confirmar"><i class="fas fa-check"></i></button>
+                                            <button class="btn-action complete" onclick="Dashboard.completePublicBooking(${apt.id})" title="Concluir"><i class="fas fa-check-double"></i></button>
+                                            <button class="btn-action delete" onclick="Dashboard.deleteAppointment(${apt.id})" title="Deletar"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <i class="fas fa-info-circle"></i>
+                            <p>Nenhum agendamento público pendente</p>
+                        </div>
+                    `}
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-calendar-alt"></i> Agendamentos Recentes</h3>
+                        <button class="btn-add" id="open-appointment-modal">
+                            <i class="fas fa-plus"></i> Novo Agendamento
+                        </button>
+                    </div>
+                    ${appointments.length > 0 ? `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Data/Hora</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${appointments.map(apt => `
+                                    <tr>
+                                        <td>${apt.clientName}</td>
+                                        <td>${apt.service}</td>
+                                        <td>${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time}</td>
+                                        <td>R$ ${apt.price.toFixed(2)}</td>
+                                        <td><span class="status-badge status-${apt.status}">${Dashboard.getStatusLabel(apt.status)}</span></td>
+                                        <td>
+                                            <button class="btn-action" onclick="Dashboard.openEditModal(${apt.id})"><i class="fas fa-edit"></i></button>
+                                            <button class="btn-action delete" onclick="Dashboard.deleteAppointment(${apt.id})"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="empty-state">
+                            <i class="fas fa-calendar"></i>
+                            <p>Nenhum agendamento encontrado</p>
+                        </div>
+                    `}
+                </div>
             </div>
         `;
 
@@ -95,6 +140,42 @@ const Dashboard = {
             'cancelled': 'Cancelado'
         };
         return labels[status] || status;
+    },
+
+    confirmPublicBooking: (appointmentId) => {
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+
+        const appointments = Storage.getAppointments();
+        const index = appointments.findIndex(a => a.id === appointmentId);
+        
+        if (index !== -1) {
+            appointments[index].userId = user.id;
+            appointments[index].status = 'pending'; // Mantém pendente mas agora pertence ao barbeiro
+            delete appointments[index].isPublicBooking;
+            
+            Storage.setAppointments(appointments);
+            Notifications.success('Agendamento confirmado e adicionado à sua agenda!');
+            Dashboard.render();
+        }
+    },
+
+    completePublicBooking: (appointmentId) => {
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+
+        const appointments = Storage.getAppointments();
+        const index = appointments.findIndex(a => a.id === appointmentId);
+        
+        if (index !== -1) {
+            appointments[index].userId = user.id;
+            appointments[index].status = 'completed';
+            delete appointments[index].isPublicBooking;
+            
+            Storage.setAppointments(appointments);
+            Notifications.success('Agendamento marcado como concluído!');
+            Dashboard.render();
+        }
     },
 
     openEditModal: (appointmentId) => {
